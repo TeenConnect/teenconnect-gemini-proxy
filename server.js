@@ -29,6 +29,24 @@ app.post("/gemini", async (req, res) => {
   }
 });
 
+// ✅ Ask Tia route — accepts { prompt: "..." }
+app.post("/api/ask-tia", async (req, res) => {
+  try {
+    const prompt = (req.body?.prompt || "").trim();
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required." });
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    res.json({ text: response.text() });
+  } catch (error) {
+    console.error("❌ Error in /api/ask-tia route:", error);
+    res.status(500).json({ error: "Gemini failed to generate response." });
+  }
+});
+
 // ✅ Base route (optional, just for test)
 app.get("/", (req, res) => {
   res.send("✅ Gemini API Proxy is running.");
