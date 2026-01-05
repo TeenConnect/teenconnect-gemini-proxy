@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static("public"));
 
 // Initialize Gemini model
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);

@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ask Tia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <style>
+:root {
+  --brand: #d22a75;
+  --bg1: #ffd9ec;
+  --bg2: #fff3f8;
+  --card: #fff;
+  --text: #333;
+  --border: #e5e5e5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Poppins, sans-serif;
+  font-size: 11pt;
+}
+
+body {
+  background: linear-gradient(var(--bg1), var(--bg2));
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  width: 100%;
+  background: var(--brand);
+  color: #fff;
+  padding: 18px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14pt;
+  position: relative;
+  font-family: 'Poppins', sans-serif;
+}
+
+.menu-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  cursor: pointer;
+  font-size: 20pt;
+  color: #fff;
+}
+.menu-options {
+  display: none;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px;
+  position: absolute;
+  right: 10px;
+  top: 50px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.menu-options button {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 10px 12px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 11pt;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+.menu-options button:hover {
+  background: #f0f0f0;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 12px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  flex: 1 1 30%;
+  padding: 10px;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+  text-align: center;
+}
+
+.tab-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.tab-content {
+  display: none;
+  padding: 16px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 0;
+  padding: 20px;
+  box-shadow: none;
+  margin: 0;
+  width: 100%;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.msg {
+  background: #fff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  line-height: 1.8;
+}
+
+.user {
+  align-self: flex-end;
+  background: var(--brand);
+  color: #fff;
+  border-bottom-right-radius: 0;
+}
+
+.bot {
+  align-self: flex-start;
+  background: #f9f9f9;
+  color: #333;
+  border-bottom-left-radius: 0;
+}
+
+.date-separator {
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  margin: 5px 0;
+}
+
+.input-area {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+button {
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.saved-msg {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  user-select: none;
+}
+
+#searchSaved {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+@media (max-width: 768px) {
+  .card {
+    border-radius: 0;
+    padding: 20px;
+    box-shadow: none;
+    margin: 0;
+    width: 100%;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 480px) {
+  .input-area {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-area input[type="text"],
+  .input-area button {
+    width: 100%;
+  }
+}
+
+/* 💬 Message Box (Tia’s Tip Card) */
+.msg.bot {
+  position: relative;
+  background: linear-gradient(to bottom right, #ff8ecf, #d22a75);
+  color: #fff;
+  border-radius: 22px;
+  padding: 28px 18px 50px;
+  text-align: center;
+  line-height: 1.8;
+  font-size: 16px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.msg.bot:hover {
+  transform: scale(1.01);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+}
+
+/* 💗 Heart Button */
+.chat-heart {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.chat-heart:hover {
+  transform: scale(1.25);
+  color: #ffd9ec;
+}
+
+.heart-pop {
+  animation: pulse 0.4s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* 🌸 Quick Tips Tab Container — white background */
+#quick.tab-content.active {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: #ffffff; /* 🤍 pure white background */
+  overflow-y: auto;
+  padding: 30px 16px;
+  box-sizing: border-box;
+}
+
+/* 🩷 Card Container (outer wrapper) */
+#quick .card {
+  width: 100%;
+  max-width: 850px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  padding: 32px 24px 42px;
+  margin: 0 auto;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* 📱 Responsive Fix */
+@media (max-width: 768px) {
+  #quick .card {
+    width: 95%;
+    padding: 24px 18px 36px;
+  }
+
+  .msg.bot {
+    font-size: 15px;
+    padding: 22px 16px 46px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  #quick .card {
+    width: 98%;
+    padding: 20px 14px 30px;
+  }
+
+  .msg.bot {
+    width: 100%;
+    font-size: 14px;
+    padding: 20px 12px 42px;
+    line-height: 1.7;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+<header>
+  Ask Tia
+  <div class="menu-btn" onclick="toggleUserMenu()">☰</div>
+  <div id="userMenu" class="menu-options">
+    <button onclick="openUsernameModal()">Change Username</button>
+    <button onclick="openClearChatModal()">Clear Chat</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<!-- Login Page -->
+<div id="loginPage" style="width:100%;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px;">
+  <h2 style="margin-bottom:20px;color:#d22a75;">Login to Ask Tia</h2>
+  <form onsubmit="return doLogin()" style="width:100%;display:flex;flex-direction:column;">
+    <input type="email" id="loginEmail" placeholder="Email" style="margin-bottom:10px;width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;">
+    <input type="password" id="loginPassword" placeholder="Password" style="margin-bottom:10px;width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;">
+    <input type="text" id="loginUsername" placeholder="Username (optional)" style="margin-bottom:20px;width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;">
+    <button type="submit">Login</button>
+    <div id="loginError" style="color:#d22a75;margin-top:15px;text-align:center;font-weight:600;"></div>
+  </form>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" style="display:none;">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="chat">Chat</button>
+    <button class="tab-btn" data-tab="saved">Saved</button>
+    <button class="tab-btn" data-tab="quick">Quick Tips</button>
+  </div>
+
+  <div id="chat" class="tab-content active">
+    <div class="card">
+      <div id="chatLog" class="chat-log"></div>
+      <div id="typingIndicator" style="padding:10px 0 0 10px;color:#888;font-size:12px;display:none;">Tia is typing...</div>
+      <div class="input-area">
+        <input type="text" id="userInput" name="userInput" placeholder="Ask Tia anything..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="saved" class="tab-content">
+    <div class="card">
+      <input type="text" id="searchSaved" placeholder="Search messages..."/>
+      <div id="savedConvos">Loading saved conversations...</div>
+    </div>
+  </div>
+
+<!-- QUICK TIPS (Styled like CycleSync Insights) -->
+<div id="quick" class="tab-content">
+  <div class="card">
+    <h2>Personalized Quick Tips</h2>
+    <p style="margin-top:10px;font-size:14px;text-align:center;">Tia has reviewed your chat history to create helpful, inspiring tips just for you:</p>
+    <div id="quickTips" style="margin-top:20px;padding:16px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+
+    <textarea id="extraTipInput" placeholder="Need more encouragement? Ask Tia..." style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);margin-top:20px;"></textarea>
+    <button onclick="askExtraTips()" style="margin-top:12px;">Ask Tia for More</button>
+    <div id="extraTipsBox" style="margin-top:20px;padding:16px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);display:none;"><strong>Tia's Response:</strong><p id="extraTipsResponse"></p></div>
+  </div>
+</div>
+
+<!-- Username Modal (Styled like Daily Dose) -->
+<div id="usernameModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;
+justify-content:center;align-items:center;">
+  <div style="background:#fff;padding:20px;border-radius:12px;width:90%;max-width:400px;">
+<h3 style="margin-bottom:12px;">Choose Username</h3>
+    <input id="usernameInput" placeholder="Enter Username" style="width:100%;padding:10px;">
+    <div id="usernameError" style="color:#d22a75;margin-top:10px;font-weight:600;text-align:center;"></div>
+    <div style="display:flex;gap:10px;justify-content:space-between;margin-top:20px;">
+      <button style="width:48%;" onclick="saveUsername()">Save</button>
+      <button style="width:48%;background:#ccc;color:#333;" onclick="closeUsernameModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clear Chat Modal (Styled like Daily Dose) -->
+<div id="clearChatModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999;justify-content:center;align-items:center;">
+  <div style="background:#fff;padding:20px;border-radius:12px;width:90%;max-width:400px;text-align:center;">
+    <h3 style="margin-bottom:15px;">Clear Chat?</h3>
+    <p style="font-size:12pt;color:#555;margin-bottom:20px;">This will delete all messages from this chat.</p>
+    <div style="display:flex;gap:10px;justify-content:space-between;">
+      <button onclick="confirmClearChat()" style="background:#d22a75;color:#fff;padding:10px;border:none;border-radius:12px;flex:1;">Delete</button>
+      <button onclick="closeClearChatModal()" style="background:#ccc;color:#333;padding:10px;border:none;border-radius:12px;flex:1;">Cancel</button>
+    </div>
+  </div>
+</div>
+<script>
+// ✅ Firebase Web Config (UPDATED: correct Storage bucket + no Gemini key in browser)
+const firebaseConfig = {
+  apiKey: "AIzaSyBtKwDVR4uk5lFpZk1Xz5f4tzLTcuyAV4Q",
+  authDomain: "teenconnect-b2871.firebaseapp.com",
+  projectId: "teenconnect-b2871",
+  storageBucket: "teenconnect-b2871.firebasestorage.app",
+  messagingSenderId: "280353230040",
+  appId: "1:280353230040:web:89f708b538f68ff077dbad"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// ✅ Cloud endpoint (Gemini runs server-side here)
+const ASK_TIA_ENDPOINT = "/api/ask-tia";
+
+let lastLoginEmail = "";
+let lastLoginUsername = "";
+let currentUserId = "";
+let lastDate = "";
+
+// 🔽 Auto-login (Appy Pie)
+async function autoLoginWithAppyPie() {
+  const appyUserRaw = localStorage.getItem("appy_user");
+  if (!appyUserRaw) return;
+
+  let appyUser;
+  try {
+    appyUser = JSON.parse(appyUserRaw);
+  } catch {
+    return;
+  }
+
+  if (!appyUser || !appyUser.email || !appyUser.password) return;
+
+  try {
+    document.getElementById("loginEmail").value = appyUser.email;
+    document.getElementById("loginPassword").value = appyUser.password;
+
+    const result = await auth.signInWithEmailAndPassword(appyUser.email, appyUser.password);
+    const uid = result.user.uid;
+
+    localStorage.setItem("askTiaLoggedIn", "true");
+    localStorage.setItem(`usernamePrompted_${uid}`, "false");
+
+    console.log("✅ Auto-login with Appy Pie credentials succeeded");
+  } catch (e) {
+    console.warn("⚠️ Appy Pie auto-login failed:", e.message);
+  }
+}
+autoLoginWithAppyPie();
+
+// ✅ Only call persistence ONCE
+auth
+  .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(() => {
+    auth.onAuthStateChanged((u) => {
+      if (u) {
+        currentUserId = u.uid;
+
+        db.collection("userProfiles")
+          .doc(u.uid)
+          .get()
+          .then((doc) => {
+            if (!doc.exists) {
+              const fallbackUsername = lastLoginUsername || u.displayName || "user";
+              return db.collection("userProfiles").doc(u.uid).set({
+                username: fallbackUsername,
+                email: u.email
+              });
+            }
+          })
+          .then(() => {
+            document.getElementById("mainApp").style.display = "block";
+            document.getElementById("loginPage").style.display = "none";
+            loadChat();
+            loadSaved();
+            updateQuickTips();
+          })
+          .catch((err) => {
+            console.error("Error initializing profile:", err);
+            document.getElementById("loginError").innerText = "Error loading your data. Try again.";
+          });
+      } else {
+        document.getElementById("mainApp").style.display = "none";
+        document.getElementById("loginPage").style.display = "flex";
+      }
+    });
+  })
+  .catch((error) => {
+    console.error("❌ Failed to set persistence:", error);
+    document.getElementById("loginError").innerText =
+      "Could not keep you signed in. Please refresh.";
+  });
+
+// Menu toggle
+function toggleUserMenu() {
+  const m = document.getElementById('userMenu');
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+window.toggleUserMenu = toggleUserMenu;
+
+// ✅ Close menu if clicking outside
+document.addEventListener("click", function (event) {
+  const menu = document.getElementById("userMenu");
+  const button = document.querySelector(".menu-btn");
+
+  if (!menu.contains(event.target) && !button.contains(event.target)) {
+    menu.style.display = "none";
+  }
+});
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => {
+  const tab = b.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(x => x.classList.toggle('active', x.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(x => x.classList.toggle('active', x.id === tab));
+  if (tab === "saved") loadSaved();
+  if (tab === "quick") loadQuickTipsOnly();
+});
+function closeUsernameModal() {
+  document.getElementById("usernameModal").style.display = "none";
+}
+// Firebase login error mapping
+function mapFirebaseError(code) {
+  switch (code) {
+    case 'auth/user-not-found': return "Account not found. Please check your email or username.";
+    case 'auth/wrong-password': return "Incorrect password. Try again.";
+    case 'auth/invalid-email': return "Invalid email format.";
+    case 'auth/too-many-requests': return "Too many attempts. Please wait and try again.";
+    default: return "Login failed. Please check your details.";
+  }
+}
+// ✅ Loads existing Quick Tips without regenerating them
+async function loadQuickTipsOnly() {
+  const container = document.getElementById("quickTips");
+  if (!currentUserId) return;
+
+  try {
+    const tipsRef = db.collection("generate").doc(currentUserId).collection("quicktips");
+    const existingSnap = await tipsRef.orderBy("createdAt", "desc").limit(1).get();
+
+    if (!existingSnap.empty) {
+      const t = existingSnap.docs[0].data().tip || "";
+      container.innerHTML = `
+        <div style="font-weight:600;margin-bottom:16px;font-size:20px;text-align:center;color:var(--brand);">
+          Your Latest Quick Tip
+        </div>
+        <div class="msg bot" 
+          style="background:linear-gradient(to bottom right,#ff8ecf,#d22a75);
+                 color:#fff;border-radius:22px;
+                 padding:30px 28px;
+                 text-align:center;
+                 line-height:1.8;
+                 font-size:16px;
+                 box-shadow:0 10px 24px rgba(0,0,0,0.15);
+                 transition:transform .3s ease,box-shadow .3s ease;
+                 max-width:650px;margin:auto;">
+          ${t}
+        </div>
+        <p style="font-size:13px;text-align:center;color:#666;margin-top:16px;">
+          Last updated: ${new Date(existingSnap.docs[0].data().createdAt.toDate()).toLocaleString()}
+        </p>
+      `;
+    } else {
+      container.innerHTML = `
+        <p style="text-align:center;color:#999;">
+          No Quick Tips yet. Start chatting to generate your first insights!
+        </p>`;
+    }
+  } catch (err) {
+    console.error("❌ loadQuickTipsOnly error:", err);
+    container.innerHTML = `
+      <p style="text-align:center;color:#d22a75;">
+        Couldn’t load your Quick Tips.<br>
+        <small style="color:#888;">${err.message || err}</small>
+      </p>`;
+  }
+}
+
+function doLogin() {
+  document.getElementById('loginError').innerText = "";
+  lastLoginEmail = document.getElementById('loginEmail').value.trim();
+  lastLoginUsername = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+
+  if (lastLoginEmail && password) {
+    auth.signInWithEmailAndPassword(lastLoginEmail, password)
+      .catch(err => document.getElementById('loginError').innerText = mapFirebaseError(err.code));
+  } else if (lastLoginUsername && password) {
+    db.collection('userProfiles').where('username', '==', lastLoginUsername).get().then(snap => {
+      if (!snap.empty) {
+        const userEmail = snap.docs[0].data().email;
+        auth.signInWithEmailAndPassword(userEmail, password)
+          .catch(err => document.getElementById('loginError').innerText = mapFirebaseError(err.code));
+      } else {
+        document.getElementById('loginError').innerText = "Username not found. Please check or sign up.";
+      }
+    }).catch(() => {
+      document.getElementById('loginError').innerText = "Error checking username. Try again.";
+    });
+  } else {
+    document.getElementById('loginError').innerText = "Please enter email or username and password.";
+  }
+
+  return false;
+}
+window.doLogin = doLogin;
+
+function logout() {
+  firebase.auth().signOut().then(() => {
+    localStorage.removeItem("askTiaLoggedIn");
+    localStorage.removeItem("username");
+    localStorage.removeItem("displayName");
+    localStorage.removeItem("email");
+    localStorage.removeItem("uid");
+
+    document.getElementById("mainApp").style.display = "none";
+    document.getElementById("loginPage").style.display = "flex";
+  });
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function appendDateSeparator(d) {
+  const date = formatDate(d);
+  if (date !== lastDate) {
+    const sep = document.createElement("div");
+    sep.className = "date-separator";
+    sep.innerText = date;
+    document.getElementById("chatLog").appendChild(sep);
+    lastDate = date;
+  }
+}
+
+function formatTiaResponse(text) {
+  const emojiAtEndRegex = /[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]+$/gu;
+
+  const cleaned = text
+    .replace(/\*/g, "")
+    .replace(/^- /gm, "• ")
+    .replace(emojiAtEndRegex, "")
+    .split(/\n+/)
+    .map(l => l.trim())
+    .filter(l => l.length > 0)
+    .join("<br><br>");
+
+  return `<div class="bot-grouped" style="line-height:1.7;">${cleaned}</div>`;
+}
+
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const message = input.value.trim();
+  if (!message) return;
+
+  input.value = "";
+  appendMessage(message, "user");
+
+  const ref = db.collection("generate").doc(currentUserId).collection("messages");
+  const typingDiv = document.getElementById("typingIndicator");
+  if (typingDiv) typingDiv.style.display = "block";
+
+  await ref.add({ text: message, sender: "user", timestamp: new Date() });
+
+  const recentMessages = await ref.orderBy("timestamp", "desc").limit(10).get();
+  const history = [];
+  recentMessages.forEach(doc => {
+    const d = doc.data();
+    history.push(`${d.sender === "user" ? "You" : "Tia"}: ${d.text.replace(/<[^>]+>/g, '')}`);
+  });
+
+  const prompt = `
+You're a kind, encouraging assistant named Tia.
+Based on the recent messages below, reply to the last user message in a loving, thoughtful, and warm way.
+
+Conversation History:
+${history.reverse().join("\n")}
+
+Tia:
+`;
+
+  try {
+    const res = await fetch(ASK_TIA_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+
+    const result = await res.json();
+    const rawReply = (result.reply || result.text || "").trim();
+
+    if (typingDiv) typingDiv.style.display = "none";
+
+    if (rawReply) {
+      await ref.add({ text: rawReply, sender: "bot", timestamp: new Date() });
+      appendMessage(rawReply, "bot");
+    } else {
+      appendMessage("Tia couldn’t think of a reply just yet. Try again!", "bot");
+    }
+  } catch (err) {
+    console.error("❌ Error getting Tia's reply:", err);
+    if (typingDiv) typingDiv.style.display = "none";
+    appendMessage("Tia had a little trouble connecting. Please try again.", "bot");
+  }
+}
+
+function openClearChatModal() {
+  document.getElementById("clearChatModal").style.display = "flex";
+}
+
+async function appendMessage(text, sender, time = new Date()) {
+  appendDateSeparator(time);
+  const div = document.createElement("div");
+  div.className = "msg " + (sender === "user" ? "user" : "bot");
+
+  if (sender === "bot") {
+    const cleanText = text.replace(/<[^>]+>/g, "").trim();
+    const safeText = cleanText.replace(/'/g, "\\'");
+    const id = `heart_${Date.now()}`;
+
+    const savedRef = db.collection("generate").doc(currentUserId).collection("saved");
+    const existing = await savedRef.where("text", "==", cleanText).limit(1).get();
+    const isSaved = !existing.empty;
+
+    div.innerHTML = `
+      <div style="line-height:1.7;">${formatTiaResponse(text)}</div>
+      <button 
+        id="${id}" 
+        onclick="toggleSaveReply('${safeText}', '${id}')"
+        title="${isSaved ? 'Unsave Reply' : 'Save Reply'}"
+        class="chat-heart ${isSaved ? 'heart-pop' : ''}" 
+        style="font-size:18px; border:none; background:none; cursor:pointer; position:absolute; bottom:10px; right:16px;">
+        ${isSaved ? "❤️" : "♡"}
+      </button>
+    `;
+  } else {
+    div.innerText = text;
+  }
+
+  document.getElementById("chatLog").appendChild(div);
+  document.getElementById("chatLog").scrollTop = document.getElementById("chatLog").scrollHeight;
+}
+
+async function toggleSaveReply(text, buttonId) {
+  if (!currentUserId || !text || !buttonId) return;
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+
+  const cleanText = text
+    .replace(/<[^>]+>/g, "")
+    .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|[\u2011-\u26FF]|[\uD83C-\uDBFF][\uDC00-\uDFFF])/g, "")
+    .trim();
+
+  const savedRef = db.collection("generate").doc(currentUserId).collection("saved");
+  const existing = await savedRef.where("text", "==", cleanText).limit(1).get();
+
+  if (!existing.empty) {
+    await savedRef.doc(existing.docs[0].id).delete();
+    btn.innerText = "♡";
+    btn.title = "Save this reply";
+    btn.classList.remove("heart-pop");
+  } else {
+    await savedRef.add({
+      text: cleanText,
+      source: "botreply",
+      createdAt: new Date()
+    });
+    btn.innerText = "❤️";
+    btn.title = "Saved";
+    btn.classList.remove("heart-pop");
+    void btn.offsetWidth;
+    btn.classList.add("heart-pop");
+  }
+
+  loadSaved();
+}
+async function loadChat() {
+  const chatLog = document.getElementById("chatLog");
+  chatLog.innerHTML = "";
+  lastDate = "";
+
+  const snapshot = await db.collection("generate")
+    .doc(currentUserId)
+    .collection("messages")
+    .orderBy("timestamp")
+    .get();
+
+  const messages = [];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const time = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
+    messages.push({ text: data.text, sender: data.sender, time });
+  });
+
+  for (const msg of messages) {
+    await appendMessage(msg.text, msg.sender, msg.time);
+  }
+}
+async function toggleSaveTip(text, buttonId) {
+  if (!currentUserId || !text || !buttonId) return;
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+
+  const cleanText = text.replace(/<[^>]+>/g, "").trim();
+  const savedRef = db.collection("generate").doc(currentUserId).collection("saved");
+  const existing = await savedRef.where("text", "==", cleanText).limit(1).get();
+
+  if (!existing.empty) {
+    await savedRef.doc(existing.docs[0].id).delete();
+    btn.innerText = "♡";
+    btn.title = "Save this tip";
+    btn.classList.remove("heart-pop");
+  } else {
+    await savedRef.add({
+      text: cleanText,
+      source: "quicktip",
+      createdAt: new Date()
+    });
+    btn.innerText = "❤️";
+    btn.title = "Saved";
+    btn.classList.remove("heart-pop");
+    void btn.offsetWidth;
+    btn.classList.add("heart-pop");
+  }
+
+  loadSaved();
+}
+function closeClearChatModal() {
+  document.getElementById("clearChatModal").style.display = "none";
+}
+
+function confirmClearChat() {
+  const ref = db.collection("generate").doc(currentUserId).collection("messages");
+  ref.get().then(snap => {
+    snap.forEach(doc => doc.ref.delete());
+    document.getElementById("chatLog").innerHTML = "";
+    lastDate = "";
+    closeClearChatModal();
+  });
+}
+
+function loadSaved() {
+  const c = document.getElementById("savedConvos");
+  c.innerHTML = "";
+
+  db.collection("generate")
+    .doc(currentUserId)
+    .collection("saved")
+    .orderBy("createdAt", "desc")
+    .get()
+    .then((snap) => {
+      if (snap.empty) {
+        c.innerHTML = "<p style='text-align:center;margin-top:10px;'>No saved tips yet.</p>";
+        return;
+      }
+
+      snap.forEach((doc) => {
+        const d = doc.data();
+        const p = document.createElement("div");
+        p.className = "saved-msg";
+        p.innerHTML = `💬 ${d.text.replace(/<[^>]+>/g, "")}`;
+        p.onclick = () => deleteSavedTip(doc.id);
+        c.appendChild(p);
+      });
+    });
+}
+
+function deleteSavedTip(id) {
+  db.collection("generate")
+    .doc(currentUserId)
+    .collection("saved")
+    .doc(id)
+    .delete()
+    .then(loadSaved);
+}
+async function askExtraTips() {
+  const input = document.getElementById("extraTipInput").value.trim();
+  const outputBox = document.getElementById("extraTipsBox");
+  const resultBox = document.getElementById("extraTipsResponse");
+  if (!input) return;
+
+  resultBox.innerHTML = "Thinking...";
+  outputBox.style.display = "block";
+
+  const ref = db.collection("generate").doc(currentUserId).collection("messages");
+  const msgs = await ref.orderBy("timestamp", "desc").limit(10).get();
+  const history = [];
+  msgs.forEach(doc => {
+    const d = doc.data();
+    history.push(`${d.sender === "user" ? "You" : "Tia"}: ${d.text.replace(/<[^>]+>/g, '')}`);
+  });
+
+  const prompt = `You're Tia, a caring mentor. Based on the past chat and this new question, provide supportive tips, recipes, affirmations, or advice:\n\nChat:\n${history.reverse().join("\n")}\n\nNew Request:\n${input}`;
+  const res = await fetch(ASK_TIA_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
+
+  const result = await res.json();
+  let output = (result.reply || result.text || "").trim() || "Tia couldn't generate a response.";
+  output = output.replace(/\*\*/g, "").replace(/\n{2,}/g, "<br><br>").replace(/\n/g, "<br>");
+  resultBox.innerHTML = output;
+}
+async function updateQuickTips() {
+  const container = document.getElementById("quickTips");
+  if (!currentUserId) return;
+
+  container.innerHTML = `
+    <p style="text-align:center;font-style:italic;color:#d22a75;">
+      Tia is reading through your messages to craft fresh insights just for you…
+    </p>
+  `;
+
+  try {
+    const userDoc = await db.collection("userProfiles").doc(currentUserId).get();
+    const username = userDoc.exists ? userDoc.data().username || "you" : "you";
+
+    const messagesRef = db.collection("generate").doc(currentUserId).collection("messages");
+    const savedRef = db.collection("generate").doc(currentUserId).collection("saved");
+    const tipsRef = db.collection("generate").doc(currentUserId).collection("quicktips");
+    const metaRef = db.collection("userMetadata").doc(currentUserId);
+
+    const existingSnap = await tipsRef.orderBy("createdAt", "desc").limit(1).get();
+    if (!existingSnap.empty) {
+      const t = existingSnap.docs[0].data().tip || "";
+      container.innerHTML = `
+        <div style="font-weight:600;margin-bottom:16px;font-size:20px;text-align:center;color:var(--brand);">
+          Your Latest Quick Tip
+        </div>
+        <div class="msg bot" 
+          style="background:linear-gradient(to bottom right,#ff8ecf,#d22a75);
+                 color:#fff;border-radius:22px;
+                 padding:30px 28px;
+                 text-align:center;
+                 line-height:1.8;
+                 font-size:16px;
+                 box-shadow:0 10px 24px rgba(0,0,0,0.15);
+                 transition:transform .3s ease,box-shadow .3s ease;
+                 max-width:650px;margin:auto;">
+          ${t}
+        </div>
+        <p style="font-size:13px;text-align:center;color:#666;margin-top:16px;">
+          Last updated: ${new Date().toLocaleString()}
+        </p>
+      `;
+    }
+
+    const [msgSnap, savedSnap] = await Promise.all([
+      messagesRef.orderBy("timestamp", "desc").limit(30).get(),
+      savedRef.orderBy("createdAt", "desc").limit(15).get()
+    ]);
+
+    if (msgSnap.empty && savedSnap.empty) {
+      container.innerHTML = `
+        <p style="text-align:center;color:#999;">
+          Start chatting or save a few favorite messages to see your Quick Tips!
+        </p>
+      `;
+      return;
+    }
+
+    let chatLines = [];
+    msgSnap.forEach(doc => {
+      const d = doc.data();
+      chatLines.push(`${d.sender === "user" ? "You" : "Tia"}: ${d.text.replace(/<[^>]+>/g, "")}`);
+    });
+
+    let savedLines = [];
+    savedSnap.forEach(doc => {
+      const t = doc.data().text?.replace(/<[^>]+>/g, "");
+      if (t) savedLines.push(`Saved: ${t}`);
+    });
+
+    const prompt = `
+You are Tia — a kind, supportive mentor.
+Analyze this chat and favorite notes to create 3–7 new Quick Tips for ${username}.
+Each tip should be warm, personal, and practical.
+Do not use emojis, hashtags, or symbols.
+Respond with short clear sentences separated by line breaks.
+
+Chat History:
+${chatLines.reverse().join("\n")}
+
+Favorites:
+${savedLines.join("\n")}
+`;
+
+    const res = await fetch(ASK_TIA_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+
+    const result = await res.json();
+    let raw = (result.reply || result.text || "").trim();
+    if (!raw) throw new Error("Empty AI reply");
+
+    raw = raw
+      .replace(/\*\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/#/g, "")
+      .replace(/---/g, "")
+      .replace(/^- /gm, "• ")
+      .replace(/\n{2,}/g, "\n")
+      .trim();
+
+    const combinedTips = raw
+      .split(/\n+/)
+      .map(t => t.replace(/^[0-9]+\.\s*/, "").trim())
+      .filter(Boolean)
+      .join("<br><br>");
+
+    const emojiRegex = /([\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]|:[^:\s]*(?:::[^:\s]*)*:)/gu;
+    const cleanCombined = combinedTips.replace(emojiRegex, "").trim();
+
+    const batch = db.batch();
+    const docRef = tipsRef.doc();
+    batch.set(docRef, { tip: cleanCombined, createdAt: new Date(), source: "ai" });
+    batch.set(metaRef, { lastTipGeneratedAt: new Date() }, { merge: true });
+    await batch.commit();
+
+    const uniqueId = `tip_${Date.now()}`;
+    const safeCombined = cleanCombined.replace(/'/g, "\\'");
+
+    container.innerHTML = `
+      <style>
+        @media (max-width: 768px) {
+          .quicktips-card {
+            width: 95vw !important;
+            margin: 0 auto !important;
+            border-radius: 20px !important;
+            padding: 20px !important;
+          }
+        }
+      </style>
+
+      <div style="font-weight:600;margin-bottom:14px;font-size:18px;text-align:center;color:var(--brand);letter-spacing:0.4px;">
+        Fresh Quick Tips for ${username}
+      </div>
+
+      <div class="quicktips-card"
+        style="background:#fff;
+               color:#333;
+               border-radius:22px;
+               padding:30px;
+               text-align:center;
+               line-height:1.9;
+               max-width:700px;
+               width:90%;
+               margin:0 auto;
+               position:relative;
+               box-shadow:0 8px 20px rgba(0,0,0,0.1);
+               transition:transform .25s ease,box-shadow .25s ease;">
+        <div style="font-size:16px;white-space:pre-line;">${cleanCombined}</div>
+        <button 
+          id="${uniqueId}" 
+          onclick="toggleSaveTip('${safeCombined}', '${uniqueId}')"
+          class="chat-heart"
+          title="Save Tip"
+          style="position:absolute;bottom:14px;right:20px;font-size:22px;
+                 color:#d22a75;background:none;border:none;cursor:pointer;">♡</button>
+      </div>
+
+      <p style="font-size:13px;text-align:center;color:#777;margin-top:16px;">
+        Last updated: ${new Date().toLocaleString()}
+      </p>
+    `;
+  } catch (err) {
+    console.error("❌ updateQuickTips error:", err);
+    container.innerHTML = `
+      <p style="text-align:center;color:#d22a75;">
+        Tia couldn’t load tips right now.<br>
+        <small style="color:#888;">${err.message || err}</small>
+      </p>
+    `;
+  }
+}
+</script>
+</body>
+</html>
