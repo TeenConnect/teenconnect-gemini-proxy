@@ -26,8 +26,10 @@ jobs:
           cd functions
           npm install
 
+      - name: Authenticate to Firebase
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase-service-account.json
+
       - name: Deploy to Firebase
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$HOME/firebase-service-account.json"
           firebase deploy --project teenconnect-b2871 --non-interactive
