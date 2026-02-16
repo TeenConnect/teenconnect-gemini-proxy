@@ -21,11 +21,10 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # 🔥 AUTHENTICATION STEP (THIS WAS MISSING)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
 
       - name: Deploy to Firebase
-        run: firebase deploy --project teenconnect-b2871 --non-interactive
+        run: firebase deploy --only hosting,functions --project teenconnect-b2871 --non-interactive
