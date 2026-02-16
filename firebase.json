@@ -1,15 +1,14 @@
 {
+  "functions": [
+    {
+      "source": "functions"
+    }
+  ],
   "hosting": {
     "public": "public",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
-      {
-        "source": "/api/**",
-        "run": {
-          "serviceId": "teenconnect-gemini-proxy",
-          "region": "us-central1"
-        }
-      },
+      { "source": "/api/**", "function": "askTia" },
       { "source": "**", "destination": "/index.html" }
     ]
   }

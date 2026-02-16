@@ -1,4 +1,11 @@
 {
+  "name": "functions",
+  "description": "TeenConnect Firebase Functions",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "firebase-admin": "^12.5.0",
