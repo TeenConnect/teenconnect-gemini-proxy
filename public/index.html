@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TeenConnect Bible - Full Version</title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBtkMVR4uk5lPzk1Xz5f4tzLTcuyAV4Q",
+  authDomain: "teenconnect-b2871.firebaseapp.com",
+  databaseURL: "https://teenconnect-b2871-default-rtdb.firebaseio.com",
+  projectId: "teenconnect-b2871",
+  storageBucket: "teenconnect-b2871.appspot.com",
+  messagingSenderId: "280353230040",
+  appId: "1:280353230040:web:89f708b538f68ff077dbad",
+  measurementId: "G-NTERMW078Q"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let audioPlayer = null;
+
+// Dummy Bible content
+const bibleText = {
+  "John 3:16": "For God so loved the world, that he gave his only Son...",
+  "Psalm 23:1": "The Lord is my shepherd; I shall not want."
+};
+
+window.login = function() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      loadNotes();
+    })
+    .catch(err => alert('Login failed: ' + err.message));
+}
+
+window.logout = function() {
+  signOut(auth).then(() => {
+    document.getElementById('loginSection').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'none';
+  });
+}
+
+window.playAudio = function(verse) {
+  if (audioPlayer) audioPlayer.pause();
+  // Placeholder audio (you can replace this with actual Bible audio URLs)
+  audioPlayer = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+  audioPlayer.play();
+}
+
+window.addNote = async function(verse) {
+  const note = prompt("Add a note for " + verse);
+  if (note) {
+    await addDoc(collection(db, "notes"), { verse: verse, note: note, userId: auth.currentUser.uid });
+    loadNotes();
+  }
+}
+
+async function loadNotes() {
+  const snapshot = await getDocs(collection(db, "notes"));
+  const notes = snapshot.docs.filter(doc => doc.data().userId === auth.currentUser.uid);
+  document.getElementById('notes').innerHTML = notes.map(n => `<div><b>${n.data().verse}</b>: ${n.data().note}</div>`).join('');
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    loadNotes();
+  }
+});
+</script>
+</head>
+<body>
+<div id="loginSection">
+  <h2>Login to TeenConnect Bible</h2>
+  <input id="loginEmail" placeholder="Email"><br>
+  <input id="loginPassword" type="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="mainApp" style="display:none;">
+  <h1>TeenConnect Bible Reader</h1>
+  <button onclick="logout()">Logout</button>
+  <h3>Bible Reader</h3>
+  <div>
+    <p onclick="playAudio('John 3:16'); addNote('John 3:16')">John 3:16 - For God so loved the world, that he gave his only Son...</p>
+    <p onclick="playAudio('Psalm 23:1'); addNote('Psalm 23:1')">Psalm 23:1 - The Lord is my shepherd; I shall not want.</p>
+  </div>
+
+  <h3>Your Notes</h3>
+  <div id="notes"></div>
+</div>
+</body>
+</html>
